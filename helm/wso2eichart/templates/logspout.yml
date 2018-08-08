@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: logspout-elk
+  namespace: kube-system
+  labels:
+    k8s-app: logspout-logging
+spec:
+  selector:
+    matchLabels:
+      name: logspout-elk
+  template:
+    metadata:
+      labels:
+        name: logspout-elk
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      containers:
+      - name: logspout-elk
+        image: bekt/logspout-logstash
+        env:
+          - name: ROUTE_URIS
+            value: "{{.Values.logspout.ip}}"
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 300m
+            memory: 200Mi
+        volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock

@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-tc-server-datadir
+spec:
+  capacity:
+    storage: 40G
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /opt/teamcity-server/datadir
+    server: 10.1.158.170
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-tc-server-logs
+spec:
+  capacity:
+    storage: 4G
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /opt/teamcity-server/logs
+    server: 10.1.158.170

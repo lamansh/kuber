@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2ei-service-api
+  labels:
+    app: wso2ei-service
+spec:
+  sessionAffinity: "{{.Values.service.sessionAffinity}}"
+  selector:
+    app: wso2ei-service
+  type: "{{.Values.service.type}}"
+  ports: |-
+    {{- range .Values.service.ports}}
+    - {{ . }}
+    {{- end}}
+
+kind: Service
+metadata:
+  name: wso2ei-service-mgt
+  labels:
+    app: wso2ei-service
+spec:
+  sessionAffinity: "{{.Values.service1.sessionAffinity}}"
+  selector:
+    app: wso2ei-service
+  type: "{{.Values.service1.type}}"
+  ports: |-
+    {{- range .Values.service1.ports}}
+    - {{ . }}
+    {{- end}}
+

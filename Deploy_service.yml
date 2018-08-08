@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2ei-service
+spec:
+  sessionAffinity: ClientIP
+  selector:
+    app: wso2ei-service
+#   app: ws02ei
+ 
+  type: NodePort
+#  externalIPs:
+#  - 10.1.158.171
+  ports:
+  - name: servlet-http
+    port: 8280
+    targetPort: 8280
+    protocol: TCP
+  - name: servlet-https
+    port: 8243
+    targetPort: 8243
+    protocol: TCP
+  - name: managment-https
+    port: 9443
+    targetPort: 9443
+    protocol: TCP

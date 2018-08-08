@@ -1,0 +1,45 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: dot-net
+  labels:
+    component: dot-net
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+     component: dot-net
+  template:
+    metadata:
+      labels:
+        component: dot-net
+    spec:
+      containers:
+      - name: dot-net
+        image: index.docker.io/denizzzzp/dotnetcoretest:0.0.1
+        resources:
+          limits:
+            cpu: 1000m
+          requests:
+            cpu: 100m
+        ports:
+        - containerPort: 5000
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dot-net-srv
+  labels:
+    component: dot-net
+spec:
+  selector:
+    component: dot-net
+  type: NodePort
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+    nodePort: 32500
+    protocol: TCP
+

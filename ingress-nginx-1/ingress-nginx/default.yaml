@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/app-root: /
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: kibana
+          servicePort: 5601
+        path: /elk

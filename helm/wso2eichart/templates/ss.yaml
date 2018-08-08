@@ -1,0 +1,76 @@
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: wso2-stateful-set
+spec:
+  serviceName: "wso2ei-service"
+  replicas: 3
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: wso2ei-service
+  template:
+    metadata:
+      labels:
+        app: wso2ei-service
+    spec:
+      terminationGracePeriodSeconds: 10
+#      securityContext:
+#        runAsUser: 8
+#        fsGroup: 8
+#        supplementalGroups: [999]
+      volumes:
+        - name: nfs-conf
+#          readonly: false
+          persistentVolumeClaim:
+            claimName: nfs-conf
+        - name: nfs-car
+#          readonly: false
+          persistentVolumeClaim:
+            claimName: nfs-car
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - wso2ei-service
+            topologyKey: "kubernetes.io/hostanme"
+      containers:
+      - name: wso2ei-integrator
+        image: "{{.Values.image.repository}}"
+        imagePullPolicy: Always
+        ports: |-
+          {{- range .Values.image.ports}}
+          - {{ . }}
+          {{- end}}
+#        - containerPort: 8280
+#        - containerPort: 8243
+#        - containerPort: 9763
+#        - containerPort: 9443
+        volumeMounts: |-
+          {{- range .Values.image.volumeMounts}}
+          - {{ . }}
+          {{- end}}
+
+
+#        - name: nfs-conf
+#          mountPath: "/home/wso2carbon/wso2ei-6.1.1/conf"
+#        - name: nfs-car
+#          mountPath: "/home/wso2carbon/wso2ei-6.1.1/repository/deployment/server/carbonapps"
+#        securityContext:
+#          allowPrivilegeEscalation: true
+      restartPolicy: Always
+      dnsPolicy: ClusterFirstWithHostNet
+#  volumeClaimTemplates:
+#    - metadata:
+#        name: nfs-pvc
+#      spec:
+#        accessModes: [ "ReadWriteOnce" ]
+#        storageClassName:
+#        resources:
+#          requests:
+#            storage: 10M

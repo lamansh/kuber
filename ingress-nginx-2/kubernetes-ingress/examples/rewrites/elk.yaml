@@ -1,0 +1,15 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: elk-ingress
+  annotations:
+    nginx.org/rewrites: "serviceName=kibana rewrite=/"
+spec:
+  rules:
+  - host: elk-kuber.esb.kernel.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: kibana
+          servicePort: 5601

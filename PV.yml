@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-conf
+spec:
+  capacity:
+    storage: 200M
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /mnt/wso2/conf
+    server: 10.1.158.171
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-car
+spec:
+  capacity:
+    storage: 200M
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /mnt/car/carbonapps
+    server: 10.1.158.171

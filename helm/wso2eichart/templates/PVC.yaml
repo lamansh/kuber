@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-conf
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: "nfs-conf"
+  resources:
+    requests:
+      storage: 100M
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-car
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: "nfs-car"
+  resources:
+    requests:
+      storage: 100M

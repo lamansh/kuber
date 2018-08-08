@@ -1,0 +1,142 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: teamcity-server
+  labels:
+    app: tc-server
+  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tc-server
+  template:
+    metadata:
+      labels:
+        app: tc-server
+    spec:
+#      volumes:
+#        - name: datadir
+#          hostPath:
+#            path: /opt/teamcity_server/datadir
+#            type: DirectoryOrCreate
+#        - name: logg
+#          hostPath:
+#            path: /opt/teamcity_server/logs
+#            type: DirectoryOrCreate
+      volumes:
+        - name: pv-tc-server-datadir
+#          readonly: false
+          persistentVolumeClaim:
+            claimName: pv-tc-server-datadir
+        - name: pv-tc-server-logs
+#          readonly: false
+          persistentVolumeClaim:
+            claimName: pv-tc-server-logs
+        - name: tz-kiev
+          hostPath:
+            path: /usr/share/zoneinfo/Europe/Kiev
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - kub04
+      containers:
+      - name: teamcity-server
+        image: jetbrains/teamcity-server:2017.2.4
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "512Mi"
+          limits:
+            cpu: "3000m"
+            memory: "2048Mi"
+        ports:
+        - containerPort: 8111
+        volumeMounts:
+        - name: pv-tc-server-datadir
+          mountPath: /data/teamcity_server/datadir
+        - name: pv-tc-server-logs
+          mountPath: /opt/teamcity/logs
+        - name: tz-kiev
+          mountPath: /etc/localtime
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: teamcity-agent
+  labels:
+    app: tc-agent
+  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tc-agent
+  template:
+    metadata:
+      labels:
+        app: tc-agent
+    spec:
+      volumes:
+        - name: conf
+          hostPath:
+            path: /opt/teamcity_agent/conf
+            type: DirectoryOrCreate
+        - name: docker
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - kub04
+      containers:
+      - name: teamcity-agent
+        image: jetbrains/teamcity-agent:2017.2.4
+        env:
+        - name: SERVER_URL
+          value: "10.1.158.171:8111"
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "256Mi"
+          limits:
+            cpu: "1024m"
+            memory: "512Mi"
+        ports:
+        - containerPort: 8111
+        volumeMounts:
+        - name: conf
+          mountPath: /data/teamcity_agent/conf
+        - name: docker
+          mountPath: /var/run/docker.sock
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tc-server-service
+spec:
+  sessionAffinity: ClientIP
+  selector:
+    app: tc-server
+#   app: ws02ei
+
+  type: NodePort
+  externalIPs:
+  - 10.1.158.171
+  ports:
+  - name: tc-web
+    port: 8111
+    targetPort: 8111
+    protocol: TCP
+

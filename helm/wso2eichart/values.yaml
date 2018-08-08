@@ -1,0 +1,50 @@
+# Default values for mychart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+image:
+  repository: "10.1.158.171:5000/wso2ei-integrator:6.1.1"
+  ports:
+  - containerPort: 8280
+  - containerPort: 8243
+  - containerPort: 9763
+  - containerPort: 9443
+  volumeMounts:
+  - name: nfs-conf
+    mountPath: "/home/wso2carbon/wso2ei-6.1.1/conf"
+  - name: nfs-car
+    mountPath: "/home/wso2carbon/wso2ei-6.1.1/repository/deployment/server/carbonapps"
+service:
+  type: NodePort
+  sessionAffinity: ClientIP
+  ports: 
+  - name: servlet-http
+    port: 8280
+    targetPort: 8280
+    protocol: TCP
+  - name: servlet-https
+    port: 8243
+    targetPort: 8243
+    protocol: TCP
+
+service1:
+  type: NodePort
+  sessionAffinity: ClientIP
+  ports: 
+  - name: managment-https
+    port: 9443
+    targetPort: 9443
+    protocol: TCP
+nfsconf:
+  capacity:
+    storage: 200M
+  nfs:
+    path: /mnt/wso2/conf
+    server: 10.1.158.171
+nfscarbon:
+  capacity:
+    storage: 200M
+  nfs:
+    path: /mnt/car/carbonapps
+    server: 10.1.158.171
+logspout:
+  ip: 10.1.158.50:15000

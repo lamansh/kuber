@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-haproxy
+  namespace: default
+spec:
+  externalIPs:
+  - 10.1.158.171
+  ports:
+    - port: 80
+      name: http
+    - port: 443
+      name: https
+      protocol: TCP
+    - port: 1936
+      name: managament
+      targetPort: 1936
+  selector:
+    run: haproxy-ingress
+  type: NodePort

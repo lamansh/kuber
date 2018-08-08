@@ -1,0 +1,62 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: haproxy-ingress
+  name: haproxy-ingress
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      run: haproxy-ingress
+  template:
+    metadata:
+      labels:
+        run: haproxy-ingress
+      namespace: default
+    spec:
+      serviceAccountName: ingress
+      containers:
+      - name: haproxy-ingress
+        image: quay.io/jcmoraisjr/haproxy-ingress
+        args:
+        - --default-backend-service=$(POD_NAMESPACE)/ingress-default-backend
+        #- --default-backend-service=$(POD_NAMESPACE)/default-http-backend
+        - --default-ssl-certificate=$(POD_NAMESPACE)/tls-secret
+        - --configmap=$(POD_NAMESPACE)/haproxy-ingress
+        ports:
+        - name: http
+          containerPort: 80
+        - name: https
+          containerPort: 443
+        - name: stat
+          containerPort: 1936
+        volumeMounts:
+          - name: haproxy-template
+            mountPath: /etc/haproxy/template
+            readOnly: true
+          - name: certs
+            mountPath: /etc/ssl/certs
+            readOnly: true
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+      volumes:
+      - name: haproxy-template
+        configMap:
+          name: haproxy-template
+          items:
+          - key: haproxy.tmpl
+            path: haproxy.tmpl
+      - name: certs
+        configMap:
+          name: certs
+          items:
+          - key: hap.pem
+            path: hap.pem

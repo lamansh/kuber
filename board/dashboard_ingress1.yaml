@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kubernetes-dashboard
+  namespace: kube-system
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: "/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/login"
+    nginx.ingress.kubernetes.io/add-base-url: "true"
+    nginx.ingress.kubernetes.io/secure-backends: "true"
+#    nginx.ingress.kubernetes.io/configuration-snippet: rewrite ^(/dashboard)$ /api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/login permanent;
+spec:
+  rules:
+  - host: elk-kuber1.esb.kernel.local
+    http:
+      paths:
+      - path: /dashboard
+        backend:
+          serviceName: kubernetes-dashboard
+          servicePort: 443

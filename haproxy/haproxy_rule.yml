@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: haproxyapp
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: haproxy
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/secure-backends: "true"
+#    ingress.kubernetes.io/rewrite-target: /
+#    ingress.kubernetes.io/ssl-redirect: "true"
+#    ingress.kubernetes.io/ssl-passthrough: "true"
+    ingress.kubernetes.io/affinity: "cookie"
+    ingress.kubernetes.io/session-cookie-name: "INGRESSCOOKIE"
+#    ingress.kubernetes.io/session-cookie-name: "current-breadcrumb"
+#    nginx.ingress.kubernetes.io/configuration-snippet: |
+#     if ($http_x_forwarded_proto != 'https') { 
+#        return 301 https://$host$request_uri;
+#      }
+spec:
+  rules:
+  - host: wso2kuber.esb.kernel.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: wso2ei-service-mgt
+          servicePort: 9443
+
+  - host: wso2.ingress
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: wso2ei-service-mgt
+          servicePort: 9443
+
+  - host: api.ingress
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: wso2ei-service-api
+          servicePort: 8243
+
+  - host: api2kuber.esb.kernel.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: wso2ei-service-api
+          servicePort: 8243

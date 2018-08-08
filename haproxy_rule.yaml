@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: haproxyapp
+  namespace: default
+  annotations:
+#    kubernetes.io/ingress.class: nginx
+    ingress.kubernetes.io/rewrite-target: /
+#    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/ssl-passthrough: "true"
+#    nginx.ingress.kubernetes.io/configuration-snippet: |
+#     if ($http_x_forwarded_proto != 'https') { 
+#        return 301 https://$host$request_uri;
+#      }
+spec:
+  rules:
+#  - host: wso2.ingress
+  - http:
+      paths:
+      - path: /carbon
+        backend:
+          serviceName: wso2ei-service
+          servicePort: 9443

@@ -1,0 +1,14 @@
+apiVersion: v1
+data:
+#  use-host-on-https: "true"
+# balance-algorithm: "hdr(User-Agent)"
+#  balance-algorithm: "rdp-cookie"
+  syslog-endpoint: "10.1.58.171"
+  ssl-redirect: "true"
+  stats-auth: kuber:kuber100
+#  hsts: true
+kind: ConfigMap
+metadata:
+  name: haproxy-ingress
+  labels:
+    run: haproxy-ingress

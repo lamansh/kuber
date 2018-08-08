@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-configmap
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    path.config: /usr/share/logstash/pipeline
+    ## Disable X-Pack
+    ## see https://www.elastic.co/guide/en/x-pack/current/xpack-settings.html
+    xpack.monitoring.enabled: true
+    xpack.monitoring.elasticsearch.url: "http://elasticsearch:9200"
+    #xpack.management.enabled: true
+    #xpack.management.elasticsearch.url: "http://elasticsearch:9200"
+    #xpack.management.elasticsearch.username:
+    #xpack.management.elasticsearch.password:
+    #xpack.management.logstash.poll_interval: 5s
+    #xpack.management.pipeline.id: ["kuber_logs"]
+  logstash.conf: |
+    # all input will come from filebeat, no local logs
+    input {
+      beats {
+        port => 5044
+        tags => [ "beats" ]
+        type => [ "wso2log" ]
+        ssl => false
+        #ssl_certificate => "/etc/logstash/logstash.crt"
+        #ssl_key => "/etc/logstash/logstash.key"
+      }
+      http {
+        port => 5080
+        type =>  "httplog"
+        codec => json
+      }
+      tcp {
+        port => 5000
+        type =>  "tcplog"
+        codec => json
+      }
+      udp {
+        port => 5000
+        type =>  "udplog"
+        codec => json
+      }
+    }
+    ## some more advanced filtering and tagging of incoming kubernetes logs is done in logstash
+    filter {
+      if [docker][image] =~ /^logstash/ {
+        drop { }
+      }
+      if [docker][name] =~ /^.*k8s_weave/ {
+        drop { }
+      }
+      if [docker][name] =~ /^.*k8s_kube-apiserver/ {
+        drop { }
+      }
+      if [docker][name] =~ /^.*k8s_kube-controller/ {
+        drop { }
+      }
+      if [docker][name] =~ /^.*k8s_kubernetes-dashboard_kubernetes/ {
+        drop { }
+      }
+      if [docker][name] =~ /^.*k8s_es/ {
+        drop { }
+      }
+      if [docker][name] =~ /^.*kibana_kibana/ {
+        drop { }
+      }
+
+
+      if [type] == "kube-logs" {
+        mutate {
+          rename => ["log", "message"]
+          add_tag => [ "pelias", "kubernetes" ]
+        }
+        date {
+          match => ["time", "ISO8601"]
+          remove_field => ["time"]
+        }
+        # all standard container logs files match a common pattern
+        grok {
+            match => { "source" => "/var/log/containers/%{DATA:pod_name}_%{DATA:namespace}_%{GREEDYDATA:container_name}-%{DATA:container_id}.log" }
+            remove_field => ["source"]
+        }
+        # system services have a simpler log filename format that does not include namespace, pod names, or container ids
+        grok {
+            match => { "source" => "/var/log/hostlogs/%{DATA:container_name}.log" }
+            add_field => { "namespace" => "kube-system" }
+            remove_field => ["source"]
+        }
+      }
+      
+      if "grainflow" in [tags] {
+        date {
+          timezone => "Europe/Kiev"
+          match => ["grainflow.date", "yyyy-MM-dd HH:mm:ss.SSS"]
+          target => "@timestamp"
+        }
+        # all standard container logs files match a common pattern
+        grok {
+          match => { "message" => "^\[KNO]\s(?<date>(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3}))\s\[(?<lg>([a-zA-z]+))\]\s\[ver:\((?<vr>([\d\.].+?))\)\]\s\[msg:\((?<msg>(.*?)|(\s.*))\)\]\s\[ex:\((?<stacktrace>(?m:.*))\)\]*" }
+        }
+        # system services have a simpler log filename format that does not include namespace, pod names, or container ids
+        syslog_pri { }
+        
+       if "_grokparsefailure" not in [tags] {
+         mutate {
+           remove_field => ["message"]
+         }
+       }
+      }
+
+
+    }
+    output {
+      if "beats" in [tags] {
+        elasticsearch {
+          hosts => "http://elasticsearch:9200"
+          manage_template => false
+          sniffing => false
+          index => "%{[@metadata][beat]}-%{[tags[0]]}-%{+YYYY.MM.dd}"
+          document_type => "%{[@metadata][type]}"
+        }
+      } else {
+        elasticsearch {
+          hosts => "http://elasticsearch:9200"
+          manage_template => false
+          sniffing => false
+          index => "logstash-%{[type]}-%{+YYYY.MM.dd}"
+          document_type => "%{[type]}"
+        }
+      }
+    }
